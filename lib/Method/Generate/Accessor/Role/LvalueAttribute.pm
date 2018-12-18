@@ -29,19 +29,44 @@ after generate_method => sub {
     );
 
     fieldhash my %cast;
+
     for my $method (grep defined, map $spec->{$_}, qw(writer accessor)) {
         install_modifier($into, 'around', $method, sub :lvalue {
             my $orig = shift;
             my $self = shift;
             my $val;
-            $val = $self->$orig(@_)
-                if @_;
+            $val = $self->$orig(@_) if @_;
             if (!exists $cast{$self}) {
                 cast $cast{$self}, $wiz, $self;
             }
-            $cast{$self};
+
+            return $cast{$self};
         });
     }
+
+    eval {
+        install_modifier($into, 'around', 'DESTROY', sub {
+            my $orig = shift;
+            my $self = shift;
+
+            # call the original DESTROY
+            $orig->( $self, @_);
+
+            # clear our stuff
+            undef %cast;
+        });
+        1;
+    } or do {
+        # The method 'DESTROY' is not found in the inheritance hierarchy for class
+
+        install_modifier($into, 'fresh', 'DESTROY', sub {
+            # clear our stuff
+            undef %cast;
+        });
+
+    };
+
+    return;
 };
 
 1;

@@ -39,6 +39,7 @@ my %WriteMakefileArgs = (
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
+    "MooX::Types::MooseLike::Base" => 0,
     "Test::More" => 0
   },
   "VERSION" => "0.17",
@@ -57,6 +58,7 @@ my %FallbackPrereqs = (
   "IPC::Open3" => 0,
   "Module::Build" => "0.28",
   "Moo" => "1.000008",
+  "MooX::Types::MooseLike::Base" => 0,
   "Test::More" => 0,
   "Variable::Magic" => "0.52",
   "strictures" => 1
