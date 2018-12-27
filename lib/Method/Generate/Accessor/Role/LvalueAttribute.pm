@@ -6,7 +6,8 @@ use strictures 1;
 use Moo::Role;
 use Variable::Magic qw(wizard cast);
 use Class::Method::Modifiers qw(install_modifier);
-use Hash::Util::FieldHash::Compat qw(fieldhash);
+use Hash::Util::FieldHash::Compat qw(fieldhash idhash register id);
+use Scalar::Util q/weaken/;
 
 after generate_method => sub {
     my $self = shift;
@@ -25,46 +26,58 @@ after generate_method => sub {
     my $wiz = wizard(
         data => sub { $_[1] },
         get  => sub { ${$_[0]} = $_[1]->$read_code; 1 },
-        set  => sub { $_[1]->$write_code(${$_[0]}); 1 },
+        set  => sub { 
+            # return unless defined $_[1];
+            # return unless defined $_[0];
+            # #use Test::More; note explain \@_;
+            $_[1]->$write_code( ${$_[0]} ); 1 
+        },
     );
 
-    fieldhash my %cast;
+    #fieldhash my %cast;
+    #idhash my %cast;
+    my %cast;
 
-    for my $method (grep defined, map $spec->{$_}, qw(writer accessor)) {
+    foreach my $method (grep defined, map $spec->{$_}, qw(writer accessor)) {
         install_modifier($into, 'around', $method, sub :lvalue {
             my $orig = shift;
             my $self = shift;
             my $val;
             $val = $self->$orig(@_) if @_;
             if (!exists $cast{$self}) {
-                cast $cast{$self}, $wiz, $self;
+                cast $cast{ $self }, $wiz, $self;
             }
 
-            return $cast{$self};
+            return $cast{ $self };
         });
     }
 
-    eval {
-        install_modifier($into, 'around', 'DESTROY', sub {
-            my $orig = shift;
-            my $self = shift;
+   my $original = $into->can( "DESTROY" );
 
-            # call the original DESTROY
-            $orig->( $self, @_);
+   {
+        no strict 'refs';
+        no warnings "redefine";
+        my $destroy = $into . "::DESTROY";
+        *$destroy = sub {
+            my ( $self ) = @_;
 
-            # clear our stuff
+            my $current = "$self";
+
+            if ( $original ) {
+                $original->( $self );    
+            }
+            
+            my %new;
+            foreach my $k ( keys %cast ) {
+                next unless $k eq $current;
+                $new{ $k } = $cast{ $k };
+            }
+
             undef %cast;
-        });
-        1;
-    } or do {
-        # The method 'DESTROY' is not found in the inheritance hierarchy for class
+            %cast = %new;
 
-        install_modifier($into, 'fresh', 'DESTROY', sub {
-            # clear our stuff
-            undef %cast;
-        });
-
-    };
+        };
+   }
 
     return;
 };

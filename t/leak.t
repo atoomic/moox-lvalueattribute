@@ -78,15 +78,19 @@ undef($t);
 
 {
     # checking conflicts between two objects
-    my $x = T->new( objName => 'item X' );
+    
     my $y = T->new( objName => 'item Y' );
 
-    $x->num += 10;
-    $y->num += 5;
-    is $x->num, 10, 'x = 10';
-    is $y->num, 5,  'y = 5';
+    {
+        my $x = T->new( objName => 'item X' );    
+    
+        $x->num += 10;
+        $y->num += 5;
+        is $x->num, 10, 'x = 10';
+        is $y->num, 5,  'y = 5';
 
-    undef $x;
+        undef $x;
+    }
     $y->num += 3;
     is $y->num, 8, 'y = 8';
 
