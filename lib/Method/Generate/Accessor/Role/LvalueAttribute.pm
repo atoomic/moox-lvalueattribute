@@ -9,6 +9,8 @@ use Class::Method::Modifiers qw(install_modifier);
 use Hash::Util::FieldHash::Compat qw(fieldhash idhash register id);
 use Scalar::Util q/weaken/;
 
+use Test::More;
+
 after generate_method => sub {
     my $self = shift;
     my ($into, $name, $spec, $quote_opts) = @_;
@@ -68,8 +70,10 @@ after generate_method => sub {
             }
             
             my %new;
+            #fieldhash my %new;
             foreach my $k ( keys %cast ) {
-                next unless $k eq $current;
+                note "$k eq $current ", $k eq $current ? 1 : 0;
+                next if $k eq $current;
                 $new{ $k } = $cast{ $k };
             }
 
