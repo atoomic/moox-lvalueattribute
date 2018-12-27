@@ -37,8 +37,8 @@ after generate_method => sub {
     );
 
     #fieldhash my %cast;
-    #idhash my %cast;
-    my %cast;
+    idhash my %cast;
+    #my %cast;
 
     foreach my $method (grep defined, map $spec->{$_}, qw(writer accessor)) {
         install_modifier($into, 'around', $method, sub :lvalue {
@@ -47,10 +47,10 @@ after generate_method => sub {
             my $val;
             $val = $self->$orig(@_) if @_;
             if (!exists $cast{$self}) {
-                cast $cast{ $self }, $wiz, $self;
+                cast $cast{ id $self }, $wiz, $self;
             }
 
-            return $cast{ $self };
+            return $cast{ id $self };
         });
     }
 
@@ -63,14 +63,15 @@ after generate_method => sub {
         *$destroy = sub {
             my ( $self ) = @_;
 
-            my $current = "$self";
+            #my $current = "$self";
+            my $current = id $self;
 
             if ( $original ) {
                 $original->( $self );    
             }
             
-            my %new;
-            #fieldhash my %new;
+            #my %new;
+            idhash my %new;
             foreach my $k ( keys %cast ) {
                 note "$k eq $current ", $k eq $current ? 1 : 0;
                 next if $k eq $current;
