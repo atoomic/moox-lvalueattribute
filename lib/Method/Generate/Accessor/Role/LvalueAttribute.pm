@@ -73,11 +73,11 @@ after generate_method => sub {
             #my %new;
             idhash my %new;
             foreach my $k ( keys %cast ) {
-                note "$k eq $current ", $k eq $current ? 1 : 0;
+                #note "$k eq $current ", $k eq $current ? 1 : 0;
                 next if $k eq $current;
                 $new{ $k } = $cast{ $k };
             }
-
+            # replace the old cast by the new one...
             undef %cast;
             %cast = %new;
 
